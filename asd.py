@@ -3,14 +3,11 @@ import datetime
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
-
+import xlrd
 # If modifying these scopes, delete the file token.json.
 SCOPES = 'https://www.googleapis.com/auth/calendar'
 
 def main():
-    """Shows basic usage of the Google Calendar API.
-    Prints the start and name of the next 10 events on the user's calendar.
-    """
     store = file.Storage('token.json')
     creds = store.get()
     if not creds or creds.invalid:
@@ -21,28 +18,39 @@ def main():
 
     # Call the Calendar API
     now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
-
-    event = {
-      'summary': 'ДВ. Администрирование OC Windows Леверьев В.С.',
-      'location': '430',
-      'description': 'л / пр',
-      'start': {
-        'dateTime': '2018-10-08T15:45:00+09:00',
-        'timeZone': 'Asia/Yakutsk',
-      },
-      'end': {
-        'dateTime': '2018-10-08T17:20:00+09:00',
-        'timeZone': 'Asia/Yakutsk',
-      },
-      'recurrence': [
-        'RRULE:FREQ=WEEKLY;COUNT=12'
-      ],
-      'reminders': {
-      }
-    }
-
-    event = service.events().insert(calendarId='primary', body=event).execute()
-    print('Event created: %s' % (event.get('htmlLink')))
-
+    start = ['08:00', '09:50', '11:40', '14:00', '15:45', '17:30']
+    end = ['09:35', '11:25', '13:15', '15:35', '17:20', '19:05']
+    days = ['08', '09', '10', '11', '12', '13']
+    book = xlrd.open_workbook('imi2018.xls')                      
+    it4 = book.sheet_by_index(8)                                   
+    for i in range(3,39):                                         
+        if it4.cell(i, 8).value == "":                            
+            continue                                              
+        para = it4.cell(i, 8).value                               
+        l_pr = it4.cell(i, 9).value                               
+        room = it4.cell(i, 10).value                              
+        #print(start[(i-3)%6], end[(i-3)%6],    para, l_pr, room)
+        a = (i-3)%6
+        b = (i-3)//6
+        event = {
+            'summary': para,
+            'location': room,
+            'description': l_pr,
+            'start': {
+              'dateTime': '2018-10-{}T{}:00+09:00'.format(days[b], start[a]),
+              'timeZone': 'Asia/Yakutsk',
+            },
+            'end': {
+              'dateTime': '2018-10-{}T{}:00+09:00'.format(days[b], end[a]),
+              'timeZone': 'Asia/Yakutsk',
+            },
+            'recurrence': [
+              'RRULE:FREQ=WEEKLY;COUNT=12'
+            ],
+            'reminders': {
+            }
+        }
+        event = service.events().insert(calendarId='primary', body=event).execute()
+        print('Event created: %s' % (event.get('htmlLink')))
 if __name__ == '__main__':
     main()
